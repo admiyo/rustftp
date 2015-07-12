@@ -16,7 +16,7 @@ fn socket(listen_on: net::SocketAddr) -> net::UdpSocket {
 }
 
 
-fn handle_read_request(data: &[u8; 100] )  {
+fn handle_read_request(data: &[u8; 100], amt: &usize, src:  &net::SocketAddr  )  {
     println!("Read Request");
 
     let ignored: u8 = data[0];
@@ -42,6 +42,19 @@ fn handle_read_request(data: &[u8; 100] )  {
         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
     };
     println!("mode: {}", mode);
+
+    let ip = net::Ipv4Addr::new(127, 0, 0, 1);
+    let send_addr = net::SocketAddrV4::new(ip, 8889);
+    let content1 = b"here is your content.".to_vec();
+    let mut message:Vec<u8> =Vec::new();
+    message.push(0);
+    message.push(3);
+    message.push(0);
+    message.push(1);
+    for i in content.iter() {
+        message.push(*i);
+    }
+    send_message(net::SocketAddr::V4(send_addr), src, message);
 }
 
 
@@ -61,7 +74,7 @@ fn read_message(socket: net::UdpSocket) {
             }
             let opcode = buf[1];
             match opcode {
-                1 => handle_read_request(&buf),
+                1 => handle_read_request(&buf, &amt, &src),
                 2 => println!("Write"),
                 3 => println!("Data"),
                 4 => println!("ACK"),
@@ -73,7 +86,7 @@ fn read_message(socket: net::UdpSocket) {
     }
 }
 
-pub fn send_message(send_addr: net::SocketAddr, target: net::SocketAddr, data: Vec<u8>) {
+pub fn send_message(send_addr: net::SocketAddr, target: &net::SocketAddr, data: Vec<u8>) {
     let socket = socket(send_addr);
     println!("Sending data");
     let result = socket.send_to(&data, target);
@@ -94,8 +107,6 @@ pub fn listen(listen_on: net::SocketAddr) {
 
 
 fn main(){
-    let ip = net::Ipv4Addr::new(127, 0, 0, 1);
-    let listen_addr = net::SocketAddrV4::new(ip, 8888);
     let ip = net::Ipv4Addr::new(127, 0, 0, 1);
     let listen_addr = net::SocketAddrV4::new(ip, 8888);
     let future = listen(net::SocketAddr::V4(listen_addr));
