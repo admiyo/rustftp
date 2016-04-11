@@ -98,7 +98,6 @@ impl  FileStream{
             Ok(amt) => println!("Sent {} bytes", amt),
             Err(err) => panic!("Write error: {}", err)
         }
-
         let mut buf=[0u8; 512];
         let bytes_read;
         let result = self.reader.read(&mut buf);
@@ -115,13 +114,8 @@ impl  FileStream{
             }
 
         }
-
         let content = buf.to_vec();
         let mut message:Vec<u8> =Vec::new();
-
-        //message.write_u16::<BigEndian>(3).unwrap();
-        //message.write_u16::<BigEndian>(*chunk).unwrap();
-
         message.push(0);
         message.push(3);
         message.write_u16::<BigEndian>(*chunk).unwrap();
@@ -129,15 +123,10 @@ impl  FileStream{
         for i in 0..bytes_read{
             message.push(content[i]);
         }
-
         connection.send_response(message);
         println!("sending block :  {}", chunk);
-
     }
 }
-
-
-
 
 fn socket(listen_on: net::SocketAddr) -> net::UdpSocket {
     let attempt = net::UdpSocket::bind(listen_on);
