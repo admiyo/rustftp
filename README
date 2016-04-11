@@ -1,0 +1,9 @@
+rustftp  A tftp Server written in Rust.
+
+
+Current status:
+Read Only works for ASCII when requested as netascii
+Binary FIle works when requested as octet
+
+Not planning on supporting Write
+
