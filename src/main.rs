@@ -22,7 +22,6 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
-use std::io::Cursor;
 use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::net;
@@ -58,8 +57,8 @@ struct FileStream {
 }
 
 impl FileStream {
-    pub fn new(data: &mut Cursor<&Vec<u8>>) -> FileStream {
-        let mut parts = data.get_ref().as_slice()[2..].split(|b| *b == b'\x00');
+    pub fn new(data: &[u8]) -> FileStream {
+        let mut parts = data[2..].split(|b| *b == b'\x00');
         let name = str::from_utf8(parts.next().unwrap()).unwrap();
         let mode = str::from_utf8(parts.next().unwrap()).unwrap();
         println!("Request name: {:?}", name);
@@ -152,25 +151,20 @@ fn read_message(socket: &net::UdpSocket) {
 
     let mut buf: [u8; 100] = [0; 100];
     loop {
-        let result = socket.recv_from(&mut buf);
-
-        match result {
+        match socket.recv_from(&mut buf) {
             Ok((amt, src)) => {
-                let data = Vec::from(&buf[0..amt]);
                 let connection = Connection {
                     socket: socket,
                     src: &src,
                 };
-                let mut rdr = Cursor::new(&data);
-
                 if amt < 2 {
                     panic!("Not enough data in packet")
                 }
-                let opcode = rdr.read_u16::<BigEndian>().unwrap();
-
+                let data = &buf[..amt];
+                let opcode = data[1];
                 match opcode {
                     1 => {
-                        let mut stream = FileStream::new(&mut rdr);
+                        let mut stream = FileStream::new(data);
                         stream.send_chunk(1, &connection);
                         file_streams.insert(src, stream);
                     }
@@ -179,7 +173,7 @@ fn read_message(socket: &net::UdpSocket) {
                     4 => {
                         let stream = file_streams.get_mut(&src).unwrap();
                         if !stream.done {
-                            let chunk = rdr.read_u16::<BigEndian>().unwrap() + 1;
+                            let chunk = (&data[2..]).read_u16::<BigEndian>().unwrap() + 1;
                             stream.send_chunk(chunk as u64, &connection);
                         }
                     }
