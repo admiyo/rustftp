@@ -133,19 +133,6 @@ impl FileStream {
     }
 }
 
-fn socket(listen_on: net::SocketAddr) -> net::UdpSocket {
-    let attempt = net::UdpSocket::bind(listen_on);
-    let socket;
-    match attempt {
-        Ok(sock) => {
-            println!("Bound socket to {}", listen_on);
-            socket = sock;
-        }
-        Err(err) => panic!("Could not bind: {}", err),
-    }
-    socket
-}
-
 fn read_message(socket: &net::UdpSocket) {
     let mut file_streams = HashMap::new();
 
@@ -186,13 +173,13 @@ fn read_message(socket: &net::UdpSocket) {
     }
 }
 
-fn listen(listen_on: net::SocketAddr) {
-    let socket = socket(listen_on);
-    read_message(&socket)
-}
-
 fn main() {
     let ip = net::Ipv4Addr::new(0, 0, 0, 0);
-    let listen_addr = net::SocketAddrV4::new(ip, 69);
-    listen(net::SocketAddr::V4(listen_addr));
+    let addr = net::SocketAddr::V4(net::SocketAddrV4::new(ip, 69));
+    let sock = match net::UdpSocket::bind(addr) {
+        Ok(sock) => sock,
+        Err(err) => panic!("Could not bind: {}", err),
+    };
+    println!("Bound socket to {}", addr);
+    read_message(&sock)
 }
