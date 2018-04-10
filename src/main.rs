@@ -58,7 +58,7 @@ struct FileStream {
 }
 
 impl FileStream {
-    pub fn new(data: &mut Cursor<&Vec<u8>>, amt: &usize) -> FileStream {
+    pub fn new(data: &mut Cursor<&Vec<u8>>) -> FileStream {
         let mut parts = data.get_ref().as_slice()[2..].split(|b| *b == b'\x00');
         let name = str::from_utf8(parts.next().unwrap()).unwrap();
         let mode = str::from_utf8(parts.next().unwrap()).unwrap();
@@ -170,7 +170,7 @@ fn read_message(socket: &net::UdpSocket) {
 
                 match opcode {
                     1 => {
-                        let mut stream = FileStream::new(&mut rdr, &amt);
+                        let mut stream = FileStream::new(&mut rdr);
                         stream.send_chunk(1, &connection);
                         file_streams.insert(src, stream);
                     }
