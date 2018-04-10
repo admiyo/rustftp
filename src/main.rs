@@ -186,14 +186,6 @@ fn read_message(socket: &net::UdpSocket) {
     }
 }
 
-pub fn send_response(socket: &net::UdpSocket, src: &net::SocketAddr, data: &Vec<u8>) {
-    let result = socket.send_to(&data, src);
-    match result {
-        Ok(amt) => println!("Sent {} bytes", amt),
-        Err(err) => panic!("Write error: {}", err),
-    }
-}
-
 pub fn listen(listen_on: net::SocketAddr) {
     let socket = socket(listen_on);
     read_message(&socket)
