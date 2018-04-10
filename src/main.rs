@@ -33,14 +33,14 @@ struct Connection<'a> {
 }
 
 impl<'a> Connection<'a> {
-    pub fn send_response(&self, data: &[u8]) {
+    fn send_response(&self, data: &[u8]) {
         let result = self.socket.send_to(data, &self.src);
         match result {
             Ok(_) => {}
             Err(err) => panic!("Write error: {}", err),
         }
     }
-    pub fn send_error(&self, code: u16, err: &str) {
+    fn send_error(&self, code: u16, err: &str) {
         let mut message = Vec::new();
         message.push((code >> 8) as u8);
         message.push(code as u8);
@@ -57,7 +57,7 @@ struct FileStream {
 }
 
 impl FileStream {
-    pub fn new(data: &[u8]) -> FileStream {
+    fn new(data: &[u8]) -> FileStream {
         let mut parts = data[2..].split(|b| *b == b'\x00');
         let name = str::from_utf8(parts.next().unwrap()).unwrap();
         let mode = str::from_utf8(parts.next().unwrap()).unwrap();
@@ -90,7 +90,7 @@ impl FileStream {
         };
     }
 
-    pub fn send_chunk(&mut self, chunk: u64, connection: &Connection) {
+    fn send_chunk(&mut self, chunk: u64, connection: &Connection) {
         if chunk > self.chunks {
             let end = [0u8, 3, (chunk >> 8) as u8, chunk as u8];
             connection.send_response(&end);
@@ -186,7 +186,7 @@ fn read_message(socket: &net::UdpSocket) {
     }
 }
 
-pub fn listen(listen_on: net::SocketAddr) {
+fn listen(listen_on: net::SocketAddr) {
     let socket = socket(listen_on);
     read_message(&socket)
 }
